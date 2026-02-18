@@ -1,67 +1,87 @@
 
 import { getClickUpTickets } from "./actions/clickup";
+import { getRecebimentoData } from "./actions/sheets";
 import {
   AlertCircle,
   CheckCircle2,
   Clock,
-  LayoutDashboard,
   MessageSquare,
   Target,
   Users,
-  AlertTriangle,
   ExternalLink,
   ShieldAlert,
-  Activity
+  Activity,
+  Truck
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { VisualAnalytics } from "./components/VisualAnalytics";
+import { RecebimentoNaoCadastrado } from "./components/RecebimentoNaoCadastrado";
+import { CronogramaInsumos } from "./components/CronogramaInsumos";
+
+interface ClickUpTicket {
+  id: string;
+  name: string;
+  originalName: string;
+  status: string;
+  ticketStatus?: string;
+  dateCreated: string;
+  dueDate?: string;
+  startDate?: string;
+  dateClosed?: string;
+  priority?: 'urgent' | 'high' | 'normal' | 'low' | 'none' | string;
+  client?: string;
+  statusColor?: string;
+  url: string;
+}
 
 export default async function DashboardPage() {
-  const tickets = await getClickUpTickets();
+  const [tickets, recebimentoData] = await Promise.all([
+    getClickUpTickets() as Promise<ClickUpTicket[]>,
+    getRecebimentoData()
+  ]);
 
-  // Total Open
-  const openTickets = tickets.filter(t => t.status.toLowerCase() !== 'concluído' && t.ticketStatus?.toLowerCase() !== 'finalizado');
+  // Total Open (Voltamos a incluir tudo para que os gráficos de Clientes e Fila reflitam a operação total)
+  const openTickets = tickets.filter((t: ClickUpTicket) => t.status.toLowerCase() !== 'concluído' && t.ticketStatus?.toLowerCase() !== 'finalizado');
 
   // Critical Tickets (Urgent priority or delayed)
-  const criticalTickets = openTickets.filter(t => {
+  const criticalTickets = openTickets.filter((t: ClickUpTicket) => {
     const createdDate = new Date(parseInt(t.dateCreated));
     const isDelayed = (Date.now() - createdDate.getTime()) > 24 * 60 * 60 * 1000;
     return t.priority === 'urgent' || t.priority === 'high' || isDelayed;
-  }).sort((a, b) => {
-    // Sort by priority (urgent first) then by date
+  }).sort((a: ClickUpTicket, b: ClickUpTicket) => {
     if (a.priority === 'urgent' && b.priority !== 'urgent') return -1;
     if (a.priority !== 'urgent' && b.priority === 'urgent') return 1;
     return parseInt(b.dateCreated) - parseInt(a.dateCreated);
   });
 
-  const delayedTicketsCount = openTickets.filter(t => {
+  const delayedTicketsCount = openTickets.filter((t: ClickUpTicket) => {
     const createdDate = new Date(parseInt(t.dateCreated));
     const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000);
     return createdDate < yesterday;
   }).length;
 
-  const urgentTicketsCount = openTickets.filter(t => t.priority === 'urgent').length;
+  const urgentTicketsCount = openTickets.filter((t: ClickUpTicket) => t.priority === 'urgent').length;
 
   // Chart Data Preparation
-  const statusGroups = openTickets.reduce((acc: any, t) => {
+  const statusGroups = openTickets.reduce((acc: Record<string, number>, t: ClickUpTicket) => {
     const key = t.ticketStatus || "A Definir";
     acc[key] = (acc[key] || 0) + 1;
     return acc;
   }, {});
   const statusData = Object.entries(statusGroups).map(([name, value]) => ({ name, value: value as number }));
 
-  const clientGroups = openTickets.reduce((acc: any, t) => {
+  const clientGroups = openTickets.reduce((acc: Record<string, number>, t: ClickUpTicket) => {
     const key = t.client || "Outros";
     acc[key] = (acc[key] || 0) + 1;
     return acc;
   }, {});
   const clientData = Object.entries(clientGroups)
     .map(([name, value]) => ({ name, value: value as number }))
-    .sort((a, b) => b.value - a.value);
+    .sort((a, b) => (b.value as number) - (a.value as number));
 
-  const priorityGroups = openTickets.reduce((acc: any, t) => {
+  const priorityGroups = openTickets.reduce((acc: Record<string, number>, t: ClickUpTicket) => {
     const key = t.priority || "none";
     acc[key] = (acc[key] || 0) + 1;
     return acc;
@@ -73,16 +93,16 @@ export default async function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-[#050507] text-white p-8 lg:p-12 font-sans tracking-tight overflow-x-hidden">
-      {/* Dynamic Background */}
+      {/* Background gradients */}
       <div className="fixed inset-0 pointer-events-none">
         <div className="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] bg-purple-900/10 blur-[150px] rounded-full animate-pulse" />
         <div className="absolute bottom-[-10%] right-[-5%] w-[50%] h-[50%] bg-blue-900/10 blur-[150px] rounded-full" />
       </div>
 
-      <div className="relative z-10 max-w-[1920px] mx-auto flex flex-col gap-10">
+      <div className="relative z-10 max-w-[1920px] mx-auto flex flex-col gap-12">
 
         {/* TV Header */}
-        <header className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 border-b border-white/5 pb-10">
+        <header className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 pb-6">
           <div className="space-y-2">
             <div className="flex items-center gap-3 text-purple-400 font-bold uppercase tracking-[0.2em] text-sm">
               <Activity size={20} className="animate-pulse" />
@@ -93,30 +113,30 @@ export default async function DashboardPage() {
             </h1>
           </div>
 
-          <div className="flex items-center gap-6">
+          <div className="flex items-center gap-10">
             <div className="flex flex-col items-end">
-              <span className="text-4xl font-mono font-bold text-white tracking-widest">
+              <span className="text-5xl font-mono font-bold text-white tracking-widest">
                 {new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
               </span>
-              <span className="text-zinc-500 uppercase tracking-widest text-xs font-bold">
+              <span className="text-zinc-500 uppercase tracking-[0.2em] text-xs font-bold">
                 {new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long' })}
               </span>
             </div>
-            <div className="h-16 w-[1px] bg-white/10 mx-2" />
+            <div className="h-16 w-[1px] bg-white/10" />
             <div className={cn(
-              "px-6 py-3 rounded-full flex items-center gap-3 border transition-all duration-500",
+              "px-8 py-4 rounded-2xl flex items-center gap-4 border transition-all duration-500",
               urgentTicketsCount > 0 ? "bg-red-500/10 border-red-500/20 text-red-500 animate-pulse" : "bg-emerald-500/10 border-emerald-500/20 text-emerald-500"
             )}>
-              <ShieldAlert size={24} />
-              <span className="text-xl font-black uppercase tracking-tighter">
+              <ShieldAlert size={32} />
+              <span className="text-2xl font-black uppercase tracking-tighter">
                 {urgentTicketsCount > 0 ? "Alerta de Crise" : "Sistema Estável"}
               </span>
             </div>
           </div>
         </header>
 
-        {/* Global Summary Large Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-8">
+        {/* SECTION 1: Top Summary Metrics */}
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-8">
           <SummaryCard
             label="Total Abertos"
             value={openTickets.length}
@@ -133,139 +153,154 @@ export default async function DashboardPage() {
             alert={urgentTicketsCount > 0}
           />
           <SummaryCard
+            label="Recebimento"
+            value={recebimentoData.length}
+            icon={<Truck size={40} />}
+            color="text-emerald-500"
+            bgColor="bg-emerald-500/10"
+            alert={recebimentoData.some(item => item.horasPendentes >= 3)}
+          />
+          <SummaryCard
             label="Atrasados > 24h"
             value={delayedTicketsCount}
             icon={<Clock size={40} />}
             color="text-orange-500"
             bgColor="bg-orange-500/10"
-            alert={delayedTicketsCount > 1}
+            alert={delayedTicketsCount > 0}
           />
-          <SummaryCard
-            label="Clientes Ativos"
-            value={clientData.length}
-            icon={<Users size={40} />}
-            color="text-purple-500"
-            bgColor="bg-purple-500/10"
-          />
+          <div className="bg-gradient-to-br from-purple-500/20 to-blue-500/20 p-8 rounded-[3rem] border border-white/10 flex items-center justify-between">
+            <div className="space-y-1">
+              <p className="text-white/60 uppercase tracking-widest font-black text-xs">Taxa de Resolução</p>
+              <div className="text-7xl font-black">
+                {tickets.length > 0 ? Math.round(((tickets.length - openTickets.length) / tickets.length) * 100) : 0}%
+              </div>
+            </div>
+            <Activity size={60} className="text-purple-400 opacity-50" />
+          </div>
         </div>
 
-        {/* Main TV Layout */}
-        <div className="grid grid-cols-1 xl:grid-cols-12 gap-10 items-start">
 
-          {/* Feed Column - Critical Focus */}
-          <div className="xl:col-span-8 space-y-8">
-            <div className="flex items-center justify-between">
-              <h2 className="text-3xl font-black tracking-tighter flex items-center gap-4">
-                <Target size={32} className="text-red-500" />
-                FILA DE ATENDIMENTO CRÍTICA
-              </h2>
-              <span className="px-4 py-2 bg-white/5 rounded-xl border border-white/10 text-zinc-400 font-mono text-sm">
-                Mostrando {criticalTickets.length} prioridades
-              </span>
-            </div>
 
-            <div className="grid gap-6">
-              {criticalTickets.length === 0 ? (
-                <div className="h-[600px] flex flex-col items-center justify-center bg-zinc-900/20 rounded-[3rem] border border-dashed border-white/10">
-                  <CheckCircle2 size={80} className="text-emerald-500 transition-all mb-6" />
-                  <p className="text-2xl text-zinc-500 font-bold uppercase tracking-widest">Nenhuma ocorrência crítica</p>
-                </div>
-              ) : (
-                criticalTickets.slice(0, 8).map((ticket) => {
-                  const createdDate = new Date(parseInt(ticket.dateCreated));
-                  const isDelayed = (Date.now() - createdDate.getTime()) > 24 * 60 * 60 * 1000;
-                  const isUrgent = ticket.priority === 'urgent';
+        {/* SECTION 2: Horizontal Health Analytics */}
+        <div className="space-y-8 pt-6">
+          <div className="flex items-center gap-4 border-t border-white/5 pt-10">
+            <Activity size={32} className="text-blue-500" />
+            <h2 className="text-3xl font-black tracking-tighter uppercase text-white">Análise de Saúde da <span className="text-zinc-500">Operação</span></h2>
+          </div>
 
-                  return (
-                    <div
-                      key={ticket.id}
-                      className={cn(
-                        "relative overflow-hidden bg-zinc-900/40 backdrop-blur-3xl border border-white/5 p-8 rounded-[2.5rem] transition-all duration-300 hover:scale-[1.01] hover:bg-zinc-900/60",
-                        isUrgent && "border-red-500/30 ring-1 ring-red-500/20"
-                      )}
-                    >
-                      <div className="flex items-center gap-8">
-                        {/* High Vis Priority Indicator */}
-                        <div className={cn(
-                          "flex flex-col items-center justify-center w-24 h-24 rounded-3xl shrink-0",
-                          isUrgent ? "bg-red-500 text-white" : "bg-zinc-800 text-zinc-400"
-                        )}>
-                          <span className="text-[10px] font-black uppercase tracking-tighter mb-1">Prioridade</span>
-                          <span className="text-xl font-black uppercase leading-none">{ticket.priority}</span>
+          <VisualAnalytics
+            statusData={statusData}
+            clientData={clientData}
+            priorityData={priorityData}
+          />
+        </div>
+        {/* NEW SECTION: Recebimento NFs */}
+        <RecebimentoNaoCadastrado initialData={recebimentoData} />
+
+        {/* SECTION: Cronograma de Insumos */}
+        <CronogramaInsumos tasks={tickets} />
+
+        {/* SECTION 3: Bottom Full-Width Critical Feed */}
+        <div className="space-y-8 pt-6">
+          <div className="flex items-center justify-between border-t border-white/5 pt-10">
+            <h2 className="text-3xl font-black tracking-tighter flex items-center gap-4 uppercase text-white">
+              <Target size={32} className="text-red-500" />
+              Fila de Atendimento <span className="text-zinc-500">Crítica</span>
+            </h2>
+            <span className="px-6 py-2 bg-white/5 rounded-2xl border border-white/10 text-zinc-400 font-mono text-lg font-bold">
+              {criticalTickets.length} Ocorrências Relevantes
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pb-20">
+            {criticalTickets.length === 0 ? (
+              <div className="col-span-full h-[300px] flex flex-col items-center justify-center bg-zinc-900/20 rounded-[3rem] border border-dashed border-white/10">
+                <CheckCircle2 size={80} className="text-emerald-500 transition-all mb-6" />
+                <p className="text-2xl text-zinc-500 font-bold uppercase tracking-widest">Nenhuma ocorrência crítica no radar</p>
+              </div>
+            ) : (
+              criticalTickets.map((ticket: ClickUpTicket) => {
+                const createdDate = new Date(parseInt(ticket.dateCreated));
+                const isDelayed = (Date.now() - createdDate.getTime()) > 24 * 60 * 60 * 1000;
+                const isUrgent = ticket.priority === 'urgent';
+
+                return (
+                  <div
+                    key={ticket.id}
+                    className={cn(
+                      "relative overflow-hidden bg-zinc-900/40 backdrop-blur-3xl border border-white/5 p-8 rounded-[2.5rem] transition-all duration-300 hover:scale-[1.01] hover:bg-zinc-900/60 flex flex-col justify-between h-auto min-h-[160px]",
+                      isUrgent && "border-red-500/30 ring-1 ring-red-500/20 shadow-[0_0_40px_rgba(239,68,68,0.05)]"
+                    )}
+                  >
+                    <div className="flex items-start gap-6">
+                      <div className={cn(
+                        "flex flex-col items-center justify-center w-20 h-20 rounded-2xl shrink-0",
+                        isUrgent ? "bg-red-500 text-white" : "bg-zinc-800 text-zinc-400"
+                      )}>
+                        <span className="text-[9px] font-black uppercase mb-1">GRAVIDADE</span>
+                        <span className="text-lg font-black uppercase leading-none">{ticket.priority}</span>
+                      </div>
+
+                      <div className="flex-1 space-y-2 min-w-0">
+                        <div className="flex items-center gap-3">
+                          <h3 className="text-2xl font-black truncate group-hover:text-purple-400 transition-colors">
+                            {ticket.name}
+                          </h3>
+                          {isDelayed && (
+                            <span className="px-3 py-1 bg-orange-500/20 border border-orange-500/40 text-orange-400 text-[10px] font-black rounded-full uppercase">
+                              OVERDUE
+                            </span>
+                          )}
                         </div>
 
-                        <div className="flex-1 space-y-3 min-w-0">
-                          <div className="flex items-center gap-4">
-                            <h3 className="text-3xl font-black truncate max-w-[800px] group-hover:text-purple-400 transition-colors">
-                              {ticket.name}
-                            </h3>
-                            {isDelayed && (
-                              <span className="px-4 py-1.5 bg-orange-500/20 border border-orange-500/40 text-orange-400 text-sm font-black rounded-full uppercase tracking-tighter animate-pulse">
-                                +24H ATRASO
-                              </span>
-                            )}
+                        <div className="flex flex-wrap items-center gap-4">
+                          <div className="flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-xl">
+                            <Users size={16} className="text-purple-400" />
+                            <span className="text-lg font-bold text-zinc-200">{ticket.client}</span>
                           </div>
-
-                          <div className="flex items-center gap-8">
-                            <div className="flex items-center gap-3 bg-white/5 px-4 py-2 rounded-2xl">
-                              <Users size={20} className="text-purple-400" />
-                              <span className="text-xl font-bold text-zinc-200">{ticket.client}</span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <div className="w-4 h-4 rounded-full shadow-[0_0_10px_rgba(255,255,255,0.2)]" style={{ backgroundColor: ticket.statusColor || '#555' }} />
-                              <span className="text-xl font-bold text-zinc-400 lowercase">{ticket.ticketStatus}</span>
-                            </div>
-                            <div className="text-lg text-zinc-500 font-mono">
-                              Aberto {formatDistanceToNow(createdDate, { addSuffix: true, locale: ptBR })}
-                            </div>
+                          <div className="flex items-center gap-2">
+                            <div className="w-3 h-3 rounded-full" style={{ backgroundColor: ticket.statusColor || '#555' }} />
+                            <span className="text-lg font-bold text-zinc-400 lowercase">{ticket.ticketStatus}</span>
                           </div>
                         </div>
-
-                        <a
-                          href={ticket.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="shrink-0 w-20 h-20 flex items-center justify-center bg-white/5 hover:bg-purple-500 text-white rounded-3xl transition-all duration-500"
-                        >
-                          <ExternalLink size={32} />
-                        </a>
                       </div>
                     </div>
-                  );
-                })
-              )}
-            </div>
+
+                    <div className="mt-6 flex items-center justify-between border-t border-white/5 pt-4">
+                      <div className="text-base text-zinc-500 font-mono font-black">
+                        {formatDistanceToNow(createdDate, { addSuffix: true, locale: ptBR })}
+                      </div>
+                      <a
+                        href={ticket.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="w-10 h-10 flex items-center justify-center bg-white/5 hover:bg-purple-500 text-white rounded-xl transition-all"
+                      >
+                        <ExternalLink size={18} />
+                      </a>
+                    </div>
+                  </div>
+                );
+              })
+            )}
           </div>
-
-          {/* Analytics Column */}
-          <div className="xl:col-span-4 space-y-10">
-            <div className="flex items-center gap-4">
-              <Activity size={32} className="text-blue-500" />
-              <h2 className="text-3xl font-black tracking-tighter">ANÁLISE DE SAÚDE</h2>
-            </div>
-
-            <VisualAnalytics
-              statusData={statusData}
-              clientData={clientData}
-              priorityData={priorityData}
-            />
-
-            <div className="bg-gradient-to-br from-purple-500/20 to-blue-500/20 p-8 rounded-[3rem] border border-white/10 text-center space-y-4">
-              <h4 className="text-xl font-black uppercase tracking-widest text-white/60">Taxa de Resolução</h4>
-              <div className="text-7xl font-black">
-                {Math.round(((tickets.length - openTickets.length) / tickets.length) * 100)}%
-              </div>
-              <div className="text-zinc-400 font-bold uppercase text-sm tracking-tighter">Média das últimas 24h</div>
-            </div>
-          </div>
-
         </div>
+
       </div>
     </div>
   );
 }
 
-function SummaryCard({ label, value, icon, color, bgColor, alert }: any) {
+interface SummaryCardProps {
+  label: string;
+  value: string | number;
+  icon: React.ReactNode;
+  color: string;
+  bgColor: string;
+  alert?: boolean;
+}
+
+function SummaryCard({ label, value, icon, color, bgColor, alert }: SummaryCardProps) {
   return (
     <div className={cn(
       "relative overflow-hidden p-8 rounded-[3rem] border border-white/5 backdrop-blur-2xl transition-all duration-500",
