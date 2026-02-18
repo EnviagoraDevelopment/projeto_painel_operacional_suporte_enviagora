@@ -60,6 +60,7 @@ export function RecebimentoNaoCadastrado({ initialData }: Props) {
                                     <th className="px-10 py-8 text-zinc-500 font-black uppercase tracking-[0.2em] text-xs text-center">NF Número</th>
                                     <th className="px-10 py-8 text-zinc-500 font-black uppercase tracking-[0.2em] text-xs text-center">Horário/Data</th>
                                     <th className="px-10 py-8 text-zinc-500 font-black uppercase tracking-[0.2em] text-xs text-center">Status Operacional</th>
+                                    <th className="px-10 py-8 text-zinc-500 font-black uppercase tracking-[0.2em] text-xs text-right">Ação</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-white/5">
@@ -120,16 +121,19 @@ export function RecebimentoNaoCadastrado({ initialData }: Props) {
                                                         {isCritical ? (
                                                             <>
                                                                 <AlertTriangle size={18} className="animate-bounce" />
-                                                                CRÍTICO: {item.horasPendentes.toFixed(1)}H PENDENTE
+                                                                CRÍTICO: {item.horasPendentes.toFixed(1)}H
                                                             </>
                                                         ) : (
                                                             <>
                                                                 <Clock size={18} />
-                                                                EM PROCESSAMENTO ({item.horasPendentes.toFixed(1)}H)
+                                                                {item.horasPendentes.toFixed(1)}H PENDENTE
                                                             </>
                                                         )}
                                                     </div>
                                                 </div>
+                                            </td>
+                                            <td className="px-10 py-8 text-right">
+                                                <ConfirmButton cliente={item.cliente} nf={item.nf} />
                                             </td>
                                         </tr>
                                     );
@@ -140,5 +144,55 @@ export function RecebimentoNaoCadastrado({ initialData }: Props) {
                 )}
             </div>
         </section>
+    );
+}
+
+function ConfirmButton({ cliente, nf }: { cliente: string; nf: string }) {
+    const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+
+    async function handleConfirm() {
+        if (status === "loading" || status === "success") return;
+
+        setStatus("loading");
+        try {
+            const { confirmInboundNF } = await import("../actions/sheets");
+            const result = await confirmInboundNF(cliente, nf);
+
+            if (result.success) {
+                setStatus("success");
+                // Reset after 3 seconds to allow reconfirming if needed, or just stay success
+                setTimeout(() => setStatus("idle"), 3000);
+            } else {
+                setStatus("error");
+                setTimeout(() => setStatus("idle"), 3000);
+            }
+        } catch (e) {
+            setStatus("error");
+            setTimeout(() => setStatus("idle"), 3000);
+        }
+    }
+
+    return (
+        <button
+            onClick={handleConfirm}
+            disabled={status === "loading" || status === "success"}
+            className={cn(
+                "flex items-center gap-2 px-6 py-3 rounded-xl font-black uppercase tracking-widest text-[10px] transition-all",
+                status === "idle" && "bg-emerald-500 text-white hover:bg-emerald-400 shadow-[0_10px_20px_rgba(16,185,129,0.2)]",
+                status === "loading" && "bg-zinc-800 text-zinc-500 cursor-wait",
+                status === "success" && "bg-emerald-500/20 text-emerald-500 border border-emerald-500/20",
+                status === "error" && "bg-red-500 text-white animate-shake"
+            )}
+        >
+            {status === "idle" && <>CONFIRMAR RECEBIMENTO</>}
+            {status === "loading" && <>PROCESSANDO...</>}
+            {status === "success" && (
+                <>
+                    <CheckCircle2 size={14} />
+                    ENVIADO!
+                </>
+            )}
+            {status === "error" && <>ERRO NO ENVIO</>}
+        </button>
     );
 }

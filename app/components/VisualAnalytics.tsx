@@ -103,7 +103,7 @@ export function VisualAnalytics({ statusData, clientData, priorityData }: Visual
             <div className="bg-zinc-900/40 backdrop-blur-xl border border-white/5 p-8 rounded-[3rem] h-[500px] flex flex-col">
                 <h3 className="text-2xl font-black mb-6 text-zinc-100 flex items-center gap-3">
                     <span className="w-3 h-8 bg-blue-500 rounded-full" />
-                    TOP CLIENTES
+                    TICKETS ABERTOS POR CLIENTES
                 </h3>
                 <div className="flex-1 w-full min-h-0">
                     <ResponsiveContainer width="100%" height="100%" minHeight={300}>

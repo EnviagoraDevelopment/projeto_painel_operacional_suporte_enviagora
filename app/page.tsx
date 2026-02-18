@@ -19,6 +19,8 @@ import { cn } from "@/lib/utils";
 import { VisualAnalytics } from "./components/VisualAnalytics";
 import { RecebimentoNaoCadastrado } from "./components/RecebimentoNaoCadastrado";
 import { CronogramaInsumos } from "./components/CronogramaInsumos";
+import { getLabelErrors } from "./actions/labelErrors";
+import { ErroEtiquetas } from "./components/ErroEtiquetas";
 
 interface ClickUpTicket {
   id: string;
@@ -37,9 +39,10 @@ interface ClickUpTicket {
 }
 
 export default async function DashboardPage() {
-  const [tickets, recebimentoData] = await Promise.all([
+  const [tickets, recebimentoData, labelErrorData] = await Promise.all([
     getClickUpTickets() as Promise<ClickUpTicket[]>,
-    getRecebimentoData()
+    getRecebimentoData(),
+    getLabelErrors()
   ]);
 
   // Total Open (Voltamos a incluir tudo para que os gráficos de Clientes e Fila reflitam a operação total)
@@ -64,9 +67,9 @@ export default async function DashboardPage() {
 
   const urgentTicketsCount = openTickets.filter((t: ClickUpTicket) => t.priority === 'urgent').length;
 
-  // Chart Data Preparation
+  // Chart Data Preparation - Agora usando o Status NATIVO do ClickUp
   const statusGroups = openTickets.reduce((acc: Record<string, number>, t: ClickUpTicket) => {
-    const key = t.ticketStatus || "A Definir";
+    const key = t.status || "A Definir";
     acc[key] = (acc[key] || 0) + 1;
     return acc;
   }, {});
@@ -138,14 +141,14 @@ export default async function DashboardPage() {
         {/* SECTION 1: Top Summary Metrics */}
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-8">
           <SummaryCard
-            label="Total Abertos"
+            label="Total Tickets Abertos"
             value={openTickets.length}
             icon={<MessageSquare size={40} />}
             color="text-blue-500"
             bgColor="bg-blue-500/10"
           />
           <SummaryCard
-            label="Críticos / Urgentes"
+            label="Tickets Críticos / Urgentes"
             value={urgentTicketsCount}
             icon={<AlertCircle size={40} />}
             color="text-red-500"
@@ -153,7 +156,7 @@ export default async function DashboardPage() {
             alert={urgentTicketsCount > 0}
           />
           <SummaryCard
-            label="Recebimento"
+            label="Notas não cadastradas WMS"
             value={recebimentoData.length}
             icon={<Truck size={40} />}
             color="text-emerald-500"
@@ -161,22 +164,21 @@ export default async function DashboardPage() {
             alert={recebimentoData.some(item => item.horasPendentes >= 3)}
           />
           <SummaryCard
-            label="Atrasados > 24h"
+            label="Tickets Atrasados > 24h"
             value={delayedTicketsCount}
             icon={<Clock size={40} />}
             color="text-orange-500"
             bgColor="bg-orange-500/10"
             alert={delayedTicketsCount > 0}
           />
-          <div className="bg-gradient-to-br from-purple-500/20 to-blue-500/20 p-8 rounded-[3rem] border border-white/10 flex items-center justify-between">
-            <div className="space-y-1">
-              <p className="text-white/60 uppercase tracking-widest font-black text-xs">Taxa de Resolução</p>
-              <div className="text-7xl font-black">
-                {tickets.length > 0 ? Math.round(((tickets.length - openTickets.length) / tickets.length) * 100) : 0}%
-              </div>
-            </div>
-            <Activity size={60} className="text-purple-400 opacity-50" />
-          </div>
+          <SummaryCard
+            label="Erros de Etiqueta (Hoje)"
+            value={labelErrorData.totalToday}
+            icon={<ShieldAlert size={40} />}
+            color="text-red-500"
+            bgColor="bg-red-500/10"
+            alert={labelErrorData.totalToday > 15}
+          />
         </div>
 
 
@@ -196,6 +198,9 @@ export default async function DashboardPage() {
         </div>
         {/* NEW SECTION: Recebimento NFs */}
         <RecebimentoNaoCadastrado initialData={recebimentoData} />
+
+        {/* SECTION: Erros de Etiquetas */}
+        <ErroEtiquetas data={labelErrorData} />
 
         {/* SECTION: Cronograma de Insumos */}
         <CronogramaInsumos tasks={tickets} />

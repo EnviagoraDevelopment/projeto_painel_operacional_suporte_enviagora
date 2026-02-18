@@ -181,3 +181,32 @@ export async function updateNFStatus(rowNumber: number, status: string) {
         };
     }
 }
+export async function confirmInboundNF(cliente: string, nf: string) {
+    const WEBHOOK_URL = process.env.N8n_SHEET_WEBHOOK;
+
+    if (!WEBHOOK_URL) {
+        console.error("[Webhook] URL não configurada no .env");
+        return { success: false, message: "Webhook não configurado" };
+    }
+
+    try {
+        const response = await fetch(WEBHOOK_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                cliente,
+                nf,
+                timestamp: new Date().toISOString()
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error(`Webhook respondeu com erro: ${response.status}`);
+        }
+
+        return { success: true };
+    } catch (error: any) {
+        console.error("[Webhook] Erro ao enviar confirmação:", error);
+        return { success: false, message: error.message };
+    }
+}

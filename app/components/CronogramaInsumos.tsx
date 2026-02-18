@@ -122,7 +122,7 @@ export function CronogramaInsumos({ tasks }: Props) {
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 {/* Coluna 1: Contagens do Dia (Selecionado) */}
                 <div className="bg-zinc-900/30 backdrop-blur-3xl border border-white/5 rounded-[3rem] p-8 space-y-8">
                     <div className="flex items-center gap-4">
@@ -161,47 +161,7 @@ export function CronogramaInsumos({ tasks }: Props) {
                     </div>
                 </div>
 
-                {/* Coluna 2: Últimas Realizadas */}
-                <div className="bg-zinc-900/30 backdrop-blur-3xl border border-white/5 rounded-[3rem] p-8 space-y-8">
-                    <div className="flex items-center gap-4">
-                        <div className="w-10 h-10 bg-purple-500/20 rounded-xl flex items-center justify-center border border-purple-500/20">
-                            <History size={20} className="text-purple-500" />
-                        </div>
-                        <h3 className="text-xl font-black uppercase tracking-tighter">Últimas <span className="text-zinc-500">Concluídas</span></h3>
-                    </div>
-
-                    <div className="space-y-4">
-                        {lastCounts.length === 0 ? (
-                            <div className="py-12 flex flex-col items-center text-center">
-                                <AlertCircle size={48} className="text-zinc-800 mb-4" />
-                                <p className="text-zinc-600 font-bold uppercase text-xs tracking-widest">Sem registros recentes</p>
-                            </div>
-                        ) : (
-                            lastCounts.map(task => {
-                                const closedDate = new Date(parseInt(task.dateClosed!));
-                                return (
-                                    <div key={task.id} className="flex items-center gap-4 bg-white/5 p-4 rounded-2xl border border-white/5">
-                                        <div className="w-10 h-10 shrink-0 bg-zinc-800 rounded-lg flex items-center justify-center text-zinc-400">
-                                            <CheckCircle2 size={18} />
-                                        </div>
-                                        <div className="min-w-0">
-                                            <div className="flex items-center gap-2">
-                                                <span className="text-[9px] font-black text-purple-400 uppercase tracking-widest truncate">{task.client}</span>
-                                                <span className="text-[9px] text-zinc-600 font-black">•</span>
-                                                <span className="text-[9px] text-zinc-500 font-bold">
-                                                    {isToday(closedDate) ? 'Hoje' : isYesterday(closedDate) ? 'Ontem' : format(closedDate, 'dd/MM')}
-                                                </span>
-                                            </div>
-                                            <h4 className="text-sm font-black text-zinc-300 truncate">{task.originalName}</h4>
-                                        </div>
-                                    </div>
-                                );
-                            })
-                        )}
-                    </div>
-                </div>
-
-                {/* Coluna 3: Mapa de Clientes */}
+                {/* Coluna 2: Mapa de Clientes */}
                 <div className="bg-zinc-900/30 backdrop-blur-3xl border border-white/5 rounded-[3rem] p-8 space-y-8">
                     <div className="flex items-center gap-4">
                         <div className="w-10 h-10 bg-orange-500/20 rounded-xl flex items-center justify-center border border-orange-500/20">
@@ -210,15 +170,32 @@ export function CronogramaInsumos({ tasks }: Props) {
                         <h3 className="text-xl font-black uppercase tracking-tighter">Base de <span className="text-zinc-500">Controle</span></h3>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-3">
-                        {allClients.map(client => (
-                            <div key={client} className="bg-white/5 border border-white/5 p-3 rounded-xl flex items-center gap-3">
-                                <div className="w-6 h-6 rounded-lg bg-zinc-800 flex items-center justify-center shrink-0">
-                                    <User size={12} className="text-zinc-500" />
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        {allClients.map(client => {
+                            // Encontrar a próxima contagem para este cliente
+                            const nextCounting = insumoTasks
+                                .filter(t => t.client === client && t.status.toLowerCase() !== 'concluído' && t.dueDate)
+                                .sort((a, b) => parseInt(a.dueDate!) - parseInt(b.dueDate!))[0];
+
+                            return (
+                                <div key={client} className="bg-white/5 border border-white/5 p-4 rounded-2xl flex items-center justify-between group hover:bg-white/[0.08] transition-all">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-8 h-8 rounded-lg bg-zinc-800 flex items-center justify-center shrink-0">
+                                            <User size={14} className="text-zinc-500" />
+                                        </div>
+                                        <span className="text-sm font-black text-zinc-200 uppercase truncate max-w-[120px]">{client}</span>
+                                    </div>
+                                    {nextCounting && (
+                                        <div className="flex flex-col items-end">
+                                            <span className="text-[9px] font-black text-zinc-500 uppercase tracking-widest">Próxima</span>
+                                            <span className="text-xs font-black text-orange-500">
+                                                {format(new Date(parseInt(nextCounting.dueDate!)), "dd/MM")}
+                                            </span>
+                                        </div>
+                                    )}
                                 </div>
-                                <span className="text-xs font-black text-zinc-400 uppercase truncate">{client}</span>
-                            </div>
-                        ))}
+                            );
+                        })}
                     </div>
 
                     <div className="pt-4 border-t border-white/5">
