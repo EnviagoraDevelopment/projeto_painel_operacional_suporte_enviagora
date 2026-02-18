@@ -89,7 +89,7 @@ export default async function DashboardPage() {
     acc[key] = (acc[key] || 0) + 1;
     return acc;
   }, {});
-  const priorityData = ["urgent", "high", "normal", "low", "none"].map(p => ({
+  const priorityData = ["urgent", "high", "normal", "none"].map(p => ({
     name: p.charAt(0).toUpperCase() + p.slice(1),
     value: priorityGroups[p] || 0
   }));
