@@ -2,6 +2,7 @@
 "use server";
 
 import { google } from "googleapis";
+import { revalidatePath } from "next/cache";
 
 const SHEET_ID = process.env.SHEET_NFS_NAO_CADASTRADAS_ID;
 const API_KEY = process.env.SHEET_NFS_NAO_CADASTRADAS_API_KEY;
@@ -46,7 +47,7 @@ export async function getRecebimentoData(): Promise<RecebimentoNF[]> {
     try {
         const response = await fetch(
             `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/A:Z?key=${API_KEY}`,
-            { next: { revalidate: 10 } }
+            { cache: 'no-store' }
         );
 
         if (!response.ok) {
@@ -204,7 +205,17 @@ export async function confirmInboundNF(cliente: string, nf: string) {
             throw new Error(`Webhook respondeu com erro: ${response.status}`);
         }
 
-        return { success: true };
+        const data = await response.json();
+        const isConfirmed = data.confirmed === "true" || data.confirmed === true;
+
+        if (isConfirmed) {
+            revalidatePath('/');
+        }
+
+        return {
+            success: isConfirmed,
+            message: isConfirmed ? "Confirmado" : "Webhook não confirmou o recebimento"
+        };
     } catch (error: any) {
         console.error("[Webhook] Erro ao enviar confirmação:", error);
         return { success: false, message: error.message };

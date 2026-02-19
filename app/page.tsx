@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { cn } from "@/lib/utils";
+import { cn } from "../lib/utils";
 import { VisualAnalytics } from "./components/VisualAnalytics";
 import { RecebimentoNaoCadastrado } from "./components/RecebimentoNaoCadastrado";
 import { CronogramaInsumos } from "./components/CronogramaInsumos";
@@ -232,16 +232,10 @@ export default async function DashboardPage() {
                 return (
                   <div
                     key={ticket.id}
-                    className={cn(
-                      "relative overflow-hidden bg-zinc-900/40 backdrop-blur-3xl border border-white/5 p-8 rounded-[2.5rem] transition-all duration-300 hover:scale-[1.01] hover:bg-zinc-900/60 flex flex-col justify-between h-auto min-h-[160px]",
-                      isUrgent && "border-red-500/30 ring-1 ring-red-500/20 shadow-[0_0_40px_rgba(239,68,68,0.05)]"
-                    )}
+                    className={`relative overflow-hidden bg-zinc-900/40 backdrop-blur-3xl border border-white/5 p-8 rounded-[2.5rem] transition-all duration-300 hover:scale-[1.01] hover:bg-zinc-900/60 flex flex-col justify-between h-auto min-h-[160px] ${isUrgent ? "border-red-500/30 ring-1 ring-red-500/20 shadow-[0_0_40px_rgba(239,68,68,0.05)]" : ""}`}
                   >
                     <div className="flex items-start gap-6">
-                      <div className={cn(
-                        "flex flex-col items-center justify-center w-20 h-20 rounded-2xl shrink-0",
-                        isUrgent ? "bg-red-500 text-white" : "bg-zinc-800 text-zinc-400"
-                      )}>
+                      <div className={`flex flex-col items-center justify-center w-20 h-20 rounded-2xl shrink-0 ${isUrgent ? "bg-red-500 text-white" : "bg-zinc-800 text-zinc-400"}`}>
                         <span className="text-[9px] font-black uppercase mb-1">GRAVIDADE</span>
                         <span className="text-lg font-black uppercase leading-none">{ticket.priority}</span>
                       </div>
@@ -307,10 +301,7 @@ interface SummaryCardProps {
 
 function SummaryCard({ label, value, icon, color, bgColor, alert }: SummaryCardProps) {
   return (
-    <div className={cn(
-      "relative overflow-hidden p-8 rounded-[3rem] border border-white/5 backdrop-blur-2xl transition-all duration-500",
-      alert ? "bg-red-500/5 animate-pulse border-red-500/20" : "bg-white/5 hover:border-white/10"
-    )}>
+    <div className={`relative overflow-hidden p-8 rounded-[3rem] border border-white/5 backdrop-blur-2xl transition-all duration-500 ${alert ? "bg-red-500/5 animate-pulse border-red-500/20" : "bg-white/5 hover:border-white/10"}`}>
       <div className="relative z-10 flex items-center justify-between">
         <div className="space-y-4">
           <p className="text-zinc-500 uppercase tracking-[0.2em] font-black text-sm">{label}</p>

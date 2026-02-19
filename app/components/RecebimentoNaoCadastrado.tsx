@@ -11,6 +11,7 @@ import {
     Clock,
     Calendar
 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { RecebimentoNF } from "../actions/sheets";
 
@@ -19,7 +20,7 @@ interface Props {
 }
 
 export function RecebimentoNaoCadastrado({ initialData }: Props) {
-    const [data] = useState<RecebimentoNF[]>(initialData);
+    const data = initialData; // Use props directly to allow server refresh to update the UI
 
     const CRITICAL_THRESHOLD = 3; // 3 hours
 
@@ -149,6 +150,7 @@ export function RecebimentoNaoCadastrado({ initialData }: Props) {
 
 function ConfirmButton({ cliente, nf }: { cliente: string; nf: string }) {
     const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+    const router = useRouter();
 
     async function handleConfirm() {
         if (status === "loading" || status === "success") return;
@@ -160,7 +162,8 @@ function ConfirmButton({ cliente, nf }: { cliente: string; nf: string }) {
 
             if (result.success) {
                 setStatus("success");
-                // Reset after 3 seconds to allow reconfirming if needed, or just stay success
+                // Refresh only this part of the server data
+                router.refresh();
                 setTimeout(() => setStatus("idle"), 3000);
             } else {
                 setStatus("error");
