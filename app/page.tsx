@@ -15,7 +15,6 @@ import {
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { cn } from "../lib/utils";
 import { VisualAnalytics } from "./components/VisualAnalytics";
 import { RecebimentoNaoCadastrado } from "./components/RecebimentoNaoCadastrado";
 import { CronogramaInsumos } from "./components/CronogramaInsumos";
@@ -126,10 +125,7 @@ export default async function DashboardPage() {
               </span>
             </div>
             <div className="h-16 w-[1px] bg-white/10" />
-            <div className={cn(
-              "px-8 py-4 rounded-2xl flex items-center gap-4 border transition-all duration-500",
-              urgentTicketsCount > 0 ? "bg-red-500/10 border-red-500/20 text-red-500 animate-pulse" : "bg-emerald-500/10 border-emerald-500/20 text-emerald-500"
-            )}>
+            <div className={`px-8 py-4 rounded-2xl flex items-center gap-4 border transition-all duration-500 ${urgentTicketsCount > 0 ? "bg-red-500/10 border-red-500/20 text-red-500 animate-pulse" : "bg-emerald-500/10 border-emerald-500/20 text-emerald-500"}`}>
               <ShieldAlert size={32} />
               <span className="text-2xl font-black uppercase tracking-tighter">
                 {urgentTicketsCount > 0 ? "Alerta de Crise" : "Sistema Estável"}
@@ -225,9 +221,10 @@ export default async function DashboardPage() {
               </div>
             ) : (
               criticalTickets.map((ticket: ClickUpTicket) => {
-                const createdDate = new Date(parseInt(ticket.dateCreated));
-                const isDelayed = (Date.now() - createdDate.getTime()) > 24 * 60 * 60 * 1000;
-                const isUrgent = ticket.priority === 'urgent';
+                const createdDate = new Date(parseInt(ticket.dateCreated || "0"));
+                const isDelayed = !isNaN(createdDate.getTime()) && (Date.now() - createdDate.getTime()) > 24 * 60 * 60 * 1000;
+                const priority = (ticket.priority || "none").toLowerCase();
+                const isUrgent = priority === 'urgent';
 
                 return (
                   <div
@@ -237,13 +234,13 @@ export default async function DashboardPage() {
                     <div className="flex items-start gap-6">
                       <div className={`flex flex-col items-center justify-center w-20 h-20 rounded-2xl shrink-0 ${isUrgent ? "bg-red-500 text-white" : "bg-zinc-800 text-zinc-400"}`}>
                         <span className="text-[9px] font-black uppercase mb-1">GRAVIDADE</span>
-                        <span className="text-lg font-black uppercase leading-none">{ticket.priority}</span>
+                        <span className="text-lg font-black uppercase leading-none">{priority}</span>
                       </div>
 
                       <div className="flex-1 space-y-2 min-w-0">
                         <div className="flex items-center gap-3">
                           <h3 className="text-2xl font-black truncate group-hover:text-purple-400 transition-colors">
-                            {ticket.name}
+                            {ticket.name || "Sem Nome"}
                           </h3>
                           {isDelayed && (
                             <span className="px-3 py-1 bg-orange-500/20 border border-orange-500/40 text-orange-400 text-[10px] font-black rounded-full uppercase">
@@ -255,11 +252,11 @@ export default async function DashboardPage() {
                         <div className="flex flex-wrap items-center gap-4">
                           <div className="flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-xl">
                             <Users size={16} className="text-purple-400" />
-                            <span className="text-lg font-bold text-zinc-200">{ticket.client}</span>
+                            <span className="text-lg font-bold text-zinc-200">{ticket.client || "---"}</span>
                           </div>
                           <div className="flex items-center gap-2">
                             <div className="w-3 h-3 rounded-full" style={{ backgroundColor: ticket.statusColor || '#555' }} />
-                            <span className="text-lg font-bold text-zinc-400 lowercase">{ticket.ticketStatus}</span>
+                            <span className="text-lg font-bold text-zinc-200 lowercase">{ticket.ticketStatus || "---"}</span>
                           </div>
                         </div>
                       </div>
@@ -267,7 +264,7 @@ export default async function DashboardPage() {
 
                     <div className="mt-6 flex items-center justify-between border-t border-white/5 pt-4">
                       <div className="text-base text-zinc-500 font-mono font-black">
-                        {formatDistanceToNow(createdDate, { addSuffix: true, locale: ptBR })}
+                        {!isNaN(createdDate.getTime()) ? formatDistanceToNow(createdDate, { addSuffix: true, locale: ptBR }) : "--"}
                       </div>
                       <a
                         href={ticket.url}
@@ -305,9 +302,9 @@ function SummaryCard({ label, value, icon, color, bgColor, alert }: SummaryCardP
       <div className="relative z-10 flex items-center justify-between">
         <div className="space-y-4">
           <p className="text-zinc-500 uppercase tracking-[0.2em] font-black text-sm">{label}</p>
-          <p className={cn("text-7xl font-black tracking-tighter", color)}>{value}</p>
+          <p className={`text-7xl font-black tracking-tighter ${color}`}>{value}</p>
         </div>
-        <div className={cn("p-6 rounded-[2.5rem]", bgColor, color)}>
+        <div className={`p-6 rounded-[2.5rem] ${bgColor} ${color}`}>
           {icon}
         </div>
       </div>
