@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState } from "react";
@@ -20,51 +19,50 @@ interface Props {
 }
 
 export function RecebimentoNaoCadastrado({ initialData }: Props) {
-    const data = initialData; // Use props directly to allow server refresh to update the UI
-
-    const CRITICAL_THRESHOLD = 3; // 3 hours
+    const data = initialData;
+    const CRITICAL_THRESHOLD = 3;
 
     return (
         <section className="space-y-8">
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-6">
-                    <div className="w-16 h-16 bg-emerald-500/20 rounded-[1.5rem] flex items-center justify-center border border-emerald-500/20">
-                        <Truck size={36} className="text-emerald-500" />
+                    <div className="w-16 h-16 bg-[#2ECC71]/10 rounded-[1.5rem] flex items-center justify-center border border-[#2ECC71]/30">
+                        <Truck size={36} className="text-[#1E8F4A]" />
                     </div>
                     <div>
-                        <h2 className="text-4xl font-black tracking-tighter uppercase leading-none">
-                            Recebimento <span className="text-zinc-500">Inbound</span>
+                        <h2 className="text-4xl font-black tracking-tighter uppercase leading-none text-[#2A2A2E]">
+                            Recebimento <span className="text-[#2ECC71]">Inbound</span>
                         </h2>
-                        <p className="text-zinc-500 font-bold uppercase tracking-widest text-sm mt-2">Controle de Notas Não Cadastradas no WMS</p>
+                        <p className="text-[#2A2A2E]/40 font-bold uppercase tracking-widest text-sm mt-2">Controle de Notas Não Cadastradas no WMS</p>
                     </div>
                 </div>
-                <div className="px-8 py-3 bg-zinc-900/50 border border-white/5 rounded-2xl flex items-center gap-4">
-                    <div className="w-3 h-3 bg-emerald-500 rounded-full animate-pulse" />
-                    <span className="text-zinc-100 font-black uppercase tracking-widest text-lg">
-                        {data.length} <span className="text-emerald-500">Pendentes</span>
+                <div className="px-8 py-3 bg-white border border-[#D6D8D8] rounded-2xl flex items-center gap-4 shadow-sm">
+                    <div className="w-3 h-3 bg-[#2ECC71] rounded-full animate-pulse" />
+                    <span className="text-[#2A2A2E] font-black uppercase tracking-widest text-lg">
+                        {data.length} <span className="text-[#2ECC71]">Pendentes</span>
                     </span>
                 </div>
             </div>
 
-            <div className="bg-zinc-900/20 backdrop-blur-3xl border border-white/5 rounded-[3rem] overflow-hidden">
+            <div className="bg-white border border-[#D6D8D8] rounded-[3rem] overflow-hidden shadow-sm">
                 {data.length === 0 ? (
                     <div className="h-[400px] flex flex-col items-center justify-center p-12">
-                        <CheckCircle2 size={100} className="text-emerald-500 mb-6 opacity-20" />
-                        <p className="text-3xl text-zinc-500 font-bold uppercase tracking-widest">Tudo em dia no recebimento</p>
+                        <CheckCircle2 size={100} className="text-[#2ECC71] mb-6 opacity-30" />
+                        <p className="text-3xl text-[#2A2A2E]/30 font-bold uppercase tracking-widest">Tudo em dia no recebimento</p>
                     </div>
                 ) : (
                     <div className="overflow-x-auto">
                         <table className="w-full text-left border-collapse">
                             <thead>
-                                <tr className="border-b border-white/5">
-                                    <th className="px-10 py-8 text-zinc-500 font-black uppercase tracking-[0.2em] text-xs">Cliente</th>
-                                    <th className="px-10 py-8 text-zinc-500 font-black uppercase tracking-[0.2em] text-xs text-center">NF Número</th>
-                                    <th className="px-10 py-8 text-zinc-500 font-black uppercase tracking-[0.2em] text-xs text-center">Horário/Data</th>
-                                    <th className="px-10 py-8 text-zinc-500 font-black uppercase tracking-[0.2em] text-xs text-center">Status Operacional</th>
-                                    <th className="px-10 py-8 text-zinc-500 font-black uppercase tracking-[0.2em] text-xs text-right">Ação</th>
+                                <tr className="border-b border-[#D6D8D8] bg-[#F4F6F5]">
+                                    <th className="px-10 py-8 text-[#2A2A2E]/50 font-black uppercase tracking-[0.2em] text-xs">Cliente</th>
+                                    <th className="px-10 py-8 text-[#2A2A2E]/50 font-black uppercase tracking-[0.2em] text-xs text-center">NF Número</th>
+                                    <th className="px-10 py-8 text-[#2A2A2E]/50 font-black uppercase tracking-[0.2em] text-xs text-center">Horário/Data</th>
+                                    <th className="px-10 py-8 text-[#2A2A2E]/50 font-black uppercase tracking-[0.2em] text-xs text-center">Status Operacional</th>
+                                    <th className="px-10 py-8 text-[#2A2A2E]/50 font-black uppercase tracking-[0.2em] text-xs text-right">Ação</th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-white/5">
+                            <tbody className="divide-y divide-[#D6D8D8]">
                                 {data.map((item) => {
                                     const isCritical = item.horasPendentes >= CRITICAL_THRESHOLD;
 
@@ -72,41 +70,41 @@ export function RecebimentoNaoCadastrado({ initialData }: Props) {
                                         <tr
                                             key={item.row}
                                             className={cn(
-                                                "group hover:bg-white/[0.02] transition-colors",
-                                                isCritical && "bg-red-500/[0.01]"
+                                                "group hover:bg-[#F4F6F5] transition-colors",
+                                                isCritical && "bg-red-50/50"
                                             )}
                                         >
                                             <td className="px-10 py-8">
                                                 <div className="flex items-center gap-5">
                                                     <div className={cn(
                                                         "w-12 h-12 rounded-2xl flex items-center justify-center shrink-0",
-                                                        isCritical ? "bg-red-500/20 text-red-500" : "bg-emerald-500/10 text-emerald-500"
+                                                        isCritical ? "bg-red-100 text-red-500" : "bg-[#2ECC71]/10 text-[#1E8F4A]"
                                                     )}>
                                                         <User size={24} />
                                                     </div>
-                                                    <span className="text-2xl font-black text-white tracking-tight uppercase group-hover:text-emerald-400 transition-colors">
+                                                    <span className="text-2xl font-black text-[#2A2A2E] tracking-tight uppercase group-hover:text-[#1E8F4A] transition-colors">
                                                         {item.cliente}
                                                     </span>
                                                 </div>
                                             </td>
                                             <td className="px-10 py-8">
                                                 <div className="flex flex-col items-center">
-                                                    <div className="flex items-center gap-2 text-zinc-400 mb-1">
+                                                    <div className="flex items-center gap-2 text-[#2A2A2E]/40 mb-1">
                                                         <FileText size={16} />
                                                         <span className="text-[10px] font-black uppercase tracking-[0.2em]">Nota Fiscal</span>
                                                     </div>
-                                                    <span className="text-3xl font-black text-zinc-100 font-mono tracking-tighter">
+                                                    <span className="text-3xl font-black text-[#2A2A2E] font-mono tracking-tighter">
                                                         {item.nf}
                                                     </span>
                                                 </div>
                                             </td>
                                             <td className="px-10 py-8">
                                                 <div className="flex flex-col items-center">
-                                                    <div className="flex items-center gap-2 text-zinc-400 mb-1">
+                                                    <div className="flex items-center gap-2 text-[#2A2A2E]/40 mb-1">
                                                         <Calendar size={16} />
                                                         <span className="text-[10px] font-black uppercase tracking-[0.2em]">Entrada</span>
                                                     </div>
-                                                    <span className="text-2xl font-bold text-zinc-300">
+                                                    <span className="text-2xl font-bold text-[#2A2A2E]/70">
                                                         {item.horarioCadastro}
                                                     </span>
                                                 </div>
@@ -116,8 +114,8 @@ export function RecebimentoNaoCadastrado({ initialData }: Props) {
                                                     <div className={cn(
                                                         "flex items-center gap-3 px-6 py-3 rounded-2xl border font-black uppercase tracking-widest text-xs",
                                                         isCritical
-                                                            ? "bg-red-500/10 border-red-500/30 text-red-500 shadow-[0_0_20px_rgba(239,68,68,0.1)]"
-                                                            : "bg-emerald-500/5 border-emerald-500/10 text-emerald-500/70"
+                                                            ? "bg-red-50 border-red-200 text-red-600"
+                                                            : "bg-[#2ECC71]/10 border-[#2ECC71]/30 text-[#1E8F4A]"
                                                     )}>
                                                         {isCritical ? (
                                                             <>
@@ -162,7 +160,6 @@ function ConfirmButton({ cliente, nf }: { cliente: string; nf: string }) {
 
             if (result.success) {
                 setStatus("success");
-                // Refresh only this part of the server data
                 router.refresh();
                 setTimeout(() => setStatus("idle"), 3000);
             } else {
@@ -181,10 +178,10 @@ function ConfirmButton({ cliente, nf }: { cliente: string; nf: string }) {
             disabled={status === "loading" || status === "success"}
             className={cn(
                 "flex items-center gap-2 px-6 py-3 rounded-xl font-black uppercase tracking-widest text-[10px] transition-all",
-                status === "idle" && "bg-emerald-500 text-white hover:bg-emerald-400 shadow-[0_10px_20px_rgba(16,185,129,0.2)]",
-                status === "loading" && "bg-zinc-800 text-zinc-500 cursor-wait",
-                status === "success" && "bg-emerald-500/20 text-emerald-500 border border-emerald-500/20",
-                status === "error" && "bg-red-500 text-white animate-shake"
+                status === "idle" && "bg-[#2ECC71] text-white hover:bg-[#1E8F4A] shadow-[0_10px_20px_rgba(46,204,113,0.2)]",
+                status === "loading" && "bg-[#F4F6F5] text-[#2A2A2E]/40 cursor-wait border border-[#D6D8D8]",
+                status === "success" && "bg-[#2ECC71]/10 text-[#1E8F4A] border border-[#2ECC71]/30",
+                status === "error" && "bg-red-500 text-white"
             )}
         >
             {status === "idle" && <>CONFIRMAR RECEBIMENTO</>}
