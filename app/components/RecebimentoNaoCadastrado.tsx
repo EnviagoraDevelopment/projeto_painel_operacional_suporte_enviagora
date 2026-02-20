@@ -3,12 +3,13 @@
 import { useState } from "react";
 import {
     Truck,
-    CheckCircle2,
-    AlertTriangle,
-    FileText,
     User,
+    FileText,
+    Calendar,
     Clock,
-    Calendar
+    AlertTriangle,
+    CheckCircle2,
+    Copy
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -21,6 +22,14 @@ interface Props {
 export function RecebimentoNaoCadastrado({ initialData }: Props) {
     const data = initialData;
     const CRITICAL_THRESHOLD = 3;
+
+    const copyToClipboard = async (text: string) => {
+        try {
+            await navigator.clipboard.writeText(text);
+        } catch (err) {
+            console.error('Failed to copy text: ', err);
+        }
+    };
 
     return (
         <section className="space-y-8">
@@ -93,9 +102,18 @@ export function RecebimentoNaoCadastrado({ initialData }: Props) {
                                                         <FileText size={16} />
                                                         <span className="text-[10px] font-black uppercase tracking-[0.2em]">Nota Fiscal</span>
                                                     </div>
-                                                    <span className="text-3xl font-black text-[#2A2A2E] font-mono tracking-tighter">
-                                                        {item.nf}
-                                                    </span>
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="text-3xl font-black text-[#2A2A2E] font-mono tracking-tighter">
+                                                            {item.nf}
+                                                        </span>
+                                                        <button
+                                                            onClick={() => copyToClipboard(item.nf)}
+                                                            className="p-2 rounded-lg bg-[#F4F6F5] border border-[#D6D8D8] hover:bg-[#2ECC71] hover:text-white hover:border-[#2ECC71] transition-all group"
+                                                            title="Copiar NF"
+                                                        >
+                                                            <Copy size={16} className="text-[#2A2A2E] group-hover:text-white" />
+                                                        </button>
+                                                    </div>
                                                 </div>
                                             </td>
                                             <td className="px-10 py-8">
